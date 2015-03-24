@@ -1,10 +1,9 @@
 [package]
 
-name = "webhook-client-rust"
+name = "small-logger"
 version = "0.0.1"
 authors = ["Pierre Baillet <pierre@baillet.name>"]
 
 [dependencies]
-
 rustc-serialize = "*"
 time = "*"

@@ -1,5 +1,5 @@
 [root]
-name = "webhook-client-rust"
+name = "small-logger"
 version = "0.0.1"
 dependencies = [
  "rustc-serialize 0.3.6 (registry+https://github.com/rust-lang/crates.io-index)",

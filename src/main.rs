@@ -1,22 +1,21 @@
 #![feature(core)]
+#![feature(std_misc)]
 
-extern crate "rustc-serialize" as rustc_serialize;
 extern crate time;
+extern crate "rustc-serialize" as rustc_serialize;
 
 use std::io::prelude::*;
 use std::os::unix::prelude::*;
-
 use std::io::BufReader;
 use std::thread;
 use std::process::{Command, Stdio};
 use std::collections::HashMap;
-
-
 use std::sync::mpsc::{Receiver, Sender, channel};
+
+use rustc_serialize::json;
 
 #[derive(Debug)]
 #[derive(Clone)]
-#[derive(PartialEq)]
 pub enum LogSource {
   ControlSystem,
   StdOut,
@@ -80,7 +79,8 @@ impl Writer {
           if tl.get("source") == Some(&LogSource::ControlSystem.to_string()) && tl.get("content") == Some(&"stop".to_string()) {
               stop = stop - 1;
           } else {
-            println!("{:?}", tl);
+            let encoded = json::encode(&tl).unwrap();
+            println!("{}", encoded);
           }
         }
         Err(e) => println!("Receive error: {}", e),
@@ -131,7 +131,7 @@ impl Runner {
               };
               if ok {
                 let now = time::now();
-                sender.send(TimestampedLine::tsl(source.clone(), now, line)).unwrap();
+                sender.send(TimestampedLine::tsl(source.clone(), now, line[0..line.len()-1].to_string())).unwrap();
               }
               ok
             } {}
@@ -146,21 +146,25 @@ impl Runner {
     let status = child.wait();
     let end = time::now();
 
+    let duration = (end-start).num_milliseconds().to_string();
 
-    sender.send(
-      match status {
-        Ok(es) => if es.success() {
-          TimestampedLine::msg("Process completed successfully.".to_string())
-        } else if let Some(ecode) = es.code() {
-          TimestampedLine::msg(format!("Process completed with error code {}.", ecode))
-        } else if let Some(esignal) = es.signal() {
-          TimestampedLine::msg(format!("Process aborted with signal {}.", esignal))
-        } else {
-          TimestampedLine::msg("Non-reachable condition reached. Something's wrong".to_string())
-        },
-        Err(run_error) => TimestampedLine::msg(format!("Something went wrong while getting the command output: {:?}", run_error)),
-      }
-    ).unwrap();
+    let mut end_line = match status {
+    Ok(es) => if es.success() {
+        let mut msg = TimestampedLine::msg("Process completed successfully.".to_string());
+        msg.insert("completed".to_string(), "0".to_string());
+        msg
+      } else if let Some(ecode) = es.code() {
+        TimestampedLine::msg(format!("Process completed with error code {}.", ecode))
+      } else if let Some(esignal) = es.signal() {
+        TimestampedLine::msg(format!("Process aborted with signal {}.", esignal))
+      } else {
+        TimestampedLine::msg("Non-reachable condition reached. Something's wrong".to_string())
+      },
+      Err(run_error) => TimestampedLine::msg(format!("Something went wrong while getting the command output: {:?}", run_error)),
+    };
+
+    end_line.insert("duration".to_string(), duration);
+    sender.send(end_line).unwrap();
 
     sender.send(TimestampedLine::stop_writer()).unwrap();
     let _ = th.join();
