@@ -7,6 +7,9 @@ extern crate "rustc-serialize" as rustc_serialize;
 use std::io::prelude::*;
 use std::os::unix::prelude::*;
 use std::io::BufReader;
+use std::fs::File;
+use std::fs::create_dir_all;
+use std::path::Path;
 use std::thread;
 use std::process::{Command, Stdio};
 use std::collections::HashMap;
@@ -70,21 +73,31 @@ impl TimestampedLine {
 pub struct Writer;
 
 impl Writer {
-  fn run(&self, receiver: Receiver<HashMap<String, String>> ) {
-    let mut stop = 3;
-    while stop != 0 {
-      match receiver.recv() {
-        Ok(tl) => {
-          // This is a stop command, decrement counter. We need to wait for main, stderr, stdout before stopping
-          if tl.get("source") == Some(&LogSource::ControlSystem.to_string()) && tl.get("content") == Some(&"stop".to_string()) {
-              stop = stop - 1;
-          } else {
-            let encoded = json::encode(&tl).unwrap();
-            println!("{}", encoded);
+  fn run(&self, destination_file:String,  receiver: Receiver<HashMap<String, String>> ) {
+    let destination = Path::new(destination_file.as_slice());
+    std::fs::create_dir_all(destination.parent().unwrap()).ok();
+    println!("Writing to {}.", destination_file);
+    match File::create(destination) {
+      Ok(mut file) => {
+        let mut stop = 3;
+        while stop != 0 {
+          match receiver.recv() {
+            Ok(tl) => {
+              // This is a stop command, decrement counter. We need to wait for main, stderr, stdout before stopping
+              if tl.get("source") == Some(&LogSource::ControlSystem.to_string()) && tl.get("content") == Some(&"stop".to_string()) {
+                  stop = stop - 1;
+              } else {
+                let encoded = json::encode(&tl).unwrap();
+                println!("{:?}", tl);
+                file.write_all(&encoded.into_bytes()).ok();
+                file.write_all(b"\n").ok();
+              }
+            }
+            Err(e) => println!("Receive error: {}", e),
           }
         }
-        Err(e) => println!("Receive error: {}", e),
-      }
+      },
+      Err(e) => panic!("Unable to open output file {}: {}", destination_file, e.to_string())
     }
   }
 }
@@ -92,19 +105,31 @@ impl Writer {
 pub struct Runner;
 
 impl Runner {
-	fn run(&self, cmd: &str, parms: Vec<String>) {
+	fn run(&self, cmd: &str, parms: Vec<String>)  {
+    let start = time::now();
+
+    let cmd_path = Path::new(cmd);
+    let fname = match cmd_path.file_name() {
+      Some(f) => {
+        let mut pth = time::strftime("./logs/%Y/%m/%d/", &start).ok().unwrap();
+        let postfix = time::strftime("-%T.ajson", &start).ok().unwrap();
+        let osname = f.to_string_lossy().into_owned();
+        pth.push_str(&osname);
+        pth.push_str(&postfix);
+        pth
+      },
+      None => panic!("Unable to find file name for {}", cmd),
+    };
 
     let (sender, receiver) = channel();
-
     let writer = Writer;
     let th = thread::spawn(move || {
-      writer.run(receiver);
+      writer.run(fname, receiver);
     });
-
 
     sender.send(TimestampedLine::msg(format!("Processing {}", cmd))).unwrap();
 
-    let start = time::now();
+
     let mut child = match Command::new(&cmd)
       .args(parms.as_slice())
       .current_dir(".")
@@ -167,23 +192,13 @@ impl Runner {
     sender.send(end_line).unwrap();
 
     sender.send(TimestampedLine::stop_writer()).unwrap();
+    // Wait for writer thread to complete its writes
     let _ = th.join();
 	}
-}
-
-#[derive(Debug)]
-pub struct Invocation {
-  command: String,
-  parameters: Vec<String>,
-  started: time::Tm,
-  ended: time::Tm,
-  exitstatus: Option<isize>,
-  exitsignal: Option<isize>,
-  logs: Vec<TimestampedLine>
 }
 
 fn main() {
   let r = Runner;
 
-  r.run("ls", Vec::<String>::new());
+  r.run("/bin/ls", Vec::<String>::new());
 }
