@@ -200,5 +200,9 @@ impl Runner {
 fn main() {
   let r = Runner;
 
-  r.run("/bin/ls", Vec::<String>::new());
+  let mut args = std::env::args();
+  let _ = args.next().unwrap();
+  let cmd = args.next().unwrap();
+
+  r.run(cmd.as_slice(), args.collect());
 }
