@@ -1,6 +1,7 @@
 [package]
 
 name = "small-logger"
+description = "a small logger for programs who do not know how to log correctly"
 version = "0.0.2"
 license-file = "LICENSE"
 repository = "https://github.com/octplane/small-logger"
