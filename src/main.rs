@@ -1,8 +1,5 @@
-#![feature(core)]
-#![feature(std_misc)]
-
 extern crate time;
-extern crate "rustc-serialize" as rustc_serialize;
+extern crate rustc_serialize;
 
 use std::io::prelude::*;
 use std::os::unix::prelude::*;
@@ -11,9 +8,11 @@ use std::fs::File;
 use std::fs::create_dir_all;
 use std::path::Path;
 use std::thread;
+use std::convert::AsRef;
 use std::process::{Command, Stdio};
 use std::collections::HashMap;
 use std::sync::mpsc::{Receiver, Sender, channel};
+
 
 use rustc_serialize::json;
 
@@ -74,7 +73,8 @@ pub struct Writer;
 
 impl Writer {
   fn run(&self, destination_file:String,  receiver: Receiver<HashMap<String, String>> ) {
-    let destination = Path::new(destination_file.as_slice());
+    let dfs: &str = destination_file.as_ref();
+    let destination = Path::new(dfs);
     std::fs::create_dir_all(destination.parent().unwrap()).ok();
     println!("Writing to {}.", destination_file);
     match File::create(destination) {
@@ -131,7 +131,7 @@ impl Runner {
 
 
     let mut child = match Command::new(&cmd)
-      .args(parms.as_slice())
+      .args(parms.as_ref())
       .current_dir(".")
       .stdin(Stdio::null())
       .stdout(Stdio::piped())
@@ -204,5 +204,5 @@ fn main() {
   let _ = args.next().unwrap();
   let cmd = args.next().unwrap();
 
-  r.run(cmd.as_slice(), args.collect());
+  r.run(cmd.as_ref(), args.collect());
 }
