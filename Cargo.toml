@@ -10,3 +10,12 @@ authors = ["Pierre Baillet <pierre@baillet.name>"]
 [dependencies]
 rustc-serialize = "*"
 time = "*"
+iron = "*"
+router = "*" # iron router
+
+[dependencies.staticfile]
+git = "https://github.com/blaenk/staticfile.git"
+branch = "rename"
+
+[dependencies.mount]
+git = "https://github.com/iron/mount.git"
