@@ -1,3 +1,5 @@
+#![feature(path_ext)]
+
 extern crate time;
 extern crate rustc_serialize;
 extern crate iron;
@@ -7,6 +9,7 @@ extern crate router;
 
 mod runner;
 mod daemon;
+mod api;
 
 fn main() {
   daemon::startup();
