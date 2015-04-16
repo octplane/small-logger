@@ -8,6 +8,7 @@ use mount::Mount;
 use router::{Router};
 use api;
 
+use data_format::FileMeta;
 
 fn handler(req: &mut Request) -> IronResult<Response> {
     let ref query = req.extensions.find::<Router>().unwrap().find("method").unwrap_or("/");
@@ -21,6 +22,8 @@ pub fn startup() {
         Ok(logs) => println!("Files: {:?}", logs),
         Err(e) => println!("Error: {:?}", e)
     }
+
+    FileMeta::fast_meta("./logs/2015/03/24/ls-17:30:30.ajson".to_string());
 
     let mut mount = Mount::new();
 
