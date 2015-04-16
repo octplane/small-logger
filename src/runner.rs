@@ -16,58 +16,7 @@ use std::sync::mpsc::{Receiver, Sender, channel};
 
 use rustc_serialize::json;
 
-#[derive(Debug)]
-#[derive(Clone)]
-pub enum LogSource {
-  ControlSystem,
-  StdOut,
-  StdErr,
-  BuildSystem,
-}
-
-impl LogSource {
-  pub fn to_string(&self) -> String {
-    match *self {
-      LogSource::ControlSystem => "Control System",
-      LogSource::StdOut => "stdout",
-      LogSource::StdErr => "stderr",
-      LogSource::BuildSystem => "Log System",
-    }.to_string()
-  }
-}
-
-pub fn to_string_ts(ti: time::Tm) -> String {
-  let format = "%Y-%m-%d %T.%f";
-  let mut ts = time::strftime(format, &ti).ok().unwrap();
-  let l = ts.len();
-  ts.truncate(l-6);
-  ts
-}
-
-#[derive(Debug)]
-pub struct TimestampedLine {
-  source: LogSource,
-  time: time::Tm,
-  content: String,
-}
-
-impl TimestampedLine {
-  pub fn tsl(source: LogSource, time: time::Tm, content: String) -> HashMap<String, String> {
-    let mut line = HashMap::new();
-    line.insert("source".to_string(), source.to_string());
-    line.insert("time".to_string(), to_string_ts(time.to_utc()));
-    line.insert("content".to_string(), content);
-
-    line
-  }
-
-  pub fn msg(reason: String) -> HashMap<String, String> {
-    TimestampedLine::tsl(LogSource::BuildSystem, time::now(), reason)
-  }
-  pub fn stop_writer() -> HashMap<String, String> {
-    TimestampedLine::tsl(LogSource::ControlSystem, time::now(), "stop".to_string())
-  }
-}
+use data_format::{LogSource, TimestampedLine};
 
 pub struct Writer;
 

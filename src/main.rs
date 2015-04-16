@@ -7,6 +7,7 @@ extern crate staticfile;
 extern crate mount;
 extern crate router;
 
+mod data_format;
 mod runner;
 mod daemon;
 mod api;
