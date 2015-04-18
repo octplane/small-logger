@@ -1,5 +1,4 @@
 #![feature(path_ext)]
-#![feature(collections)]
 
 extern crate time;
 extern crate rustc_serialize;

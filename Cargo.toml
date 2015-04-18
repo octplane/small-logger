@@ -12,6 +12,7 @@ rustc-serialize = "*"
 time = "*"
 iron = "*"
 router = "*" # iron router
+hyper = "*"
 
 [dependencies.staticfile]
 git = "https://github.com/blaenk/staticfile.git"

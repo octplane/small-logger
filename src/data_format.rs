@@ -1,11 +1,13 @@
 extern crate time;
 
 use std::collections::HashMap;
-use rustc_serialize::{Decoder, Decodable};
+use rustc_serialize::{Encoder, Encodable, Decoder, Decodable};
+use rustc_serialize::json::decode;
 use std::fs::File;
 use std::io::Error;
 use std::io::BufReader;
 use std::io::BufRead;
+use std::convert::AsRef;
 
 trait Serializable {
     fn serialized(&self) -> String;
@@ -29,14 +31,30 @@ struct JsonTime {
 
 impl Decodable for JsonTime {
     fn decode<D: Decoder>(d: &mut D) -> Result<JsonTime, D::Error> {
-        let v = JsonTime{time: time::now()};
+        let cropped_time = try!(d.read_str());
+        let format = "%Y-%m-%d %T.%f";
+
+        let time = cropped_time + "000000";
+        let ts = try!(time::strptime(time.as_ref(), format));
+        let v = JsonTime{time: ts};
         Ok(v)
+    }
+}
+
+impl Encodable for JsonTime {
+    fn encode<S: Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
+        let format = "%Y-%m-%d %T.%f";
+        let mut ts = time::strftime(format, &self.time).ok().unwrap();
+        let l = ts.len();
+        ts.truncate(l-6);
+        s.emit_str(ts.as_ref())
     }
 }
 
 #[derive(Debug)]
 #[derive(Clone)]
 #[derive(RustcDecodable)]
+#[derive(RustcEncodable)]
 pub enum LogSource {
   ControlSystem, // Used to control the writer process. Should not appear in the logs
   StdOut,
@@ -64,7 +82,8 @@ pub struct TimestampedLine {
 
 #[derive(Debug)]
 #[derive(RustcDecodable)]
-pub struct TimestampedLineD {
+#[derive(RustcEncodable)]
+pub struct DeserializableTimestampedLine {
   source: LogSource,
   time: JsonTime,
   content: String,
@@ -93,8 +112,8 @@ impl TimestampedLine {
 #[derive(Debug)]
 pub struct FileMeta {
     source: LogSource,
-    startTime: time::Tm,
-    endTime: Option<time::Tm>,
+    start_time: time::Tm,
+    end_time: Option<time::Tm>,
 }
 
 impl FileMeta {
@@ -104,10 +123,15 @@ impl FileMeta {
         let mut t = BufReader::new(f);
         let mut l = String::new();
         match t.read_line(&mut l) {
-            Ok(sz) => println!("Read first line of {} : {}", source,  l),
+            Ok(_) => {
+                match decode::<DeserializableTimestampedLine>(l.as_ref()) {
+                    Ok(line) => println!("{:?}", line),
+                    Err(e) => panic!("Failed reading and decoding line {}: {}", l, e)
+                }
+            }
             Err(e) => panic!("{}", e)
         }
 
-        Ok(FileMeta{source: LogSource::BuildSystem, startTime: time::now(), endTime: None})
+        Ok(FileMeta{source: LogSource::BuildSystem, start_time: time::now(), end_time: None})
     }
 }

@@ -11,7 +11,7 @@ use api;
 use data_format::FileMeta;
 
 fn handler(req: &mut Request) -> IronResult<Response> {
-    let ref query = req.extensions.find::<Router>().unwrap().find("method").unwrap_or("/");
+    let ref query = req.extensions.get::<Router>().unwrap().find("method").unwrap_or("/");
     println!("{}", query);
     Ok(Response::with(status::Ok))
 }
