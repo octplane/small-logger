@@ -15,8 +15,8 @@ router = "*" # iron router
 hyper = "*"
 
 [dependencies.staticfile]
-git = "https://github.com/blaenk/staticfile.git"
-branch = "rename"
+git = "https://github.com/octplane/staticfile.git"
+branch = "fix_mightly"
 
 [dependencies.mount]
 git = "https://github.com/iron/mount.git"

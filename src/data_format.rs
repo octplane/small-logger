@@ -1,3 +1,4 @@
+
 extern crate time;
 
 use std::collections::HashMap;
@@ -28,6 +29,26 @@ struct JsonTime {
     time: time::Tm
 }
 
+impl JsonTime {
+    fn from_string(time_to_ms: String) -> Result<JsonTime, String> {
+        let format = "%Y-%m-%d %T.%f";
+        // Add ns to time
+        let time = time_to_ms + "000000";
+        println!("{}", time);
+        match time::strptime(time.as_ref(), format) {
+            Ok(ts) => Ok(JsonTime{time: ts}),
+            Err(e) => Err(format!("Unable to parse {} as {}", time, format))
+        }
+    }
+
+    fn to_string(&self) -> String {
+        let format = "%Y-%m-%d %T.%f";
+        let mut ts = time::strftime(format, &self.time).ok().unwrap();
+        let l = ts.len();
+        ts.truncate(l-6);
+        ts
+    }
+}
 
 impl Decodable for JsonTime {
     fn decode<D: Decoder>(d: &mut D) -> Result<JsonTime, D::Error> {
@@ -35,9 +56,10 @@ impl Decodable for JsonTime {
         let format = "%Y-%m-%d %T.%f";
 
         let time = cropped_time + "000000";
-        let ts = try!(time::strptime(time.as_ref(), format));
-        let v = JsonTime{time: ts};
-        Ok(v)
+        match time::strptime(time.as_ref(), format) {
+            Ok(ts) => Ok(JsonTime{time: ts}),
+            Err(e) => Err(d.error(format!("Unable to parse {} as {}", time, format).as_ref()))
+        }
     }
 }
 
@@ -51,6 +73,16 @@ impl Encodable for JsonTime {
     }
 }
 
+#[test]
+fn encodeDecodeJsonTime() {
+    let t = time::at(time::Timespec::new(236928791, 113000000));
+    let jt = JsonTime{time: t};
+    let witness = "1977-07-05 07:33:11.113";
+    assert_eq!(jt.to_string(), witness);
+    assert_eq!(JsonTime::from_string(witness.to_string()).unwrap().time, jt.time);
+}
+
+
 #[derive(Debug)]
 #[derive(Clone)]
 #[derive(RustcDecodable)]
@@ -63,14 +95,14 @@ pub enum LogSource {
 }
 
 impl LogSource {
-  pub fn to_string(&self) -> String {
-    match *self {
+    pub fn to_string(&self) -> String {
+        match *self {
       LogSource::ControlSystem => "Control System",
       LogSource::StdOut => "stdout",
       LogSource::StdErr => "stderr",
       LogSource::BuildSystem => "Log System",
     }.to_string()
-  }
+    }
 }
 
 #[derive(Debug)]
@@ -91,22 +123,22 @@ pub struct DeserializableTimestampedLine {
 
 
 impl TimestampedLine {
-  pub fn tsl(source: LogSource, time: time::Tm, content: String) -> HashMap<String, String> {
-    let mut line = HashMap::new();
-    line.insert("source".to_string(), source.to_string());
-    line.insert("time".to_string(), time.to_utc().serialized());
-    line.insert("content".to_string(), content);
+    pub fn tsl(source: LogSource, time: time::Tm, content: String) -> HashMap<String, String> {
+        let mut line = HashMap::new();
+        line.insert("source".to_string(), source.to_string());
+        line.insert("time".to_string(), time.to_utc().serialized());
+        line.insert("content".to_string(), content);
 
-    line
-  }
+        line
+    }
 
-  pub fn msg(reason: String) -> HashMap<String, String> {
-    TimestampedLine::tsl(LogSource::BuildSystem, time::now(), reason)
-  }
+    pub fn msg(reason: String) -> HashMap<String, String> {
+        TimestampedLine::tsl(LogSource::BuildSystem, time::now(), reason)
+    }
 
-  pub fn stop_writer() -> HashMap<String, String> {
-    TimestampedLine::tsl(LogSource::ControlSystem, time::now(), "stop".to_string())
-  }
+    pub fn stop_writer() -> HashMap<String, String> {
+        TimestampedLine::tsl(LogSource::ControlSystem, time::now(), "stop".to_string())
+    }
 }
 
 #[derive(Debug)]
