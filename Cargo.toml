@@ -12,9 +12,9 @@ rustc-serialize = "*"
 time = "*"
 iron = "*"
 router = "*" # iron router
-hyper = "*"
 staticfile = "*"
 openssl-sys="0.7.4"
+getopts = "0.2"
 
 [dependencies.mount]
 git = "https://github.com/iron/mount.git"
