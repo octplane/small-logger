@@ -13,10 +13,8 @@ time = "*"
 iron = "*"
 router = "*" # iron router
 hyper = "*"
-
-[dependencies.staticfile]
-git = "https://github.com/octplane/staticfile.git"
-branch = "fix_mightly"
+staticfile = "*"
+openssl-sys="0.7.4"
 
 [dependencies.mount]
 git = "https://github.com/iron/mount.git"
