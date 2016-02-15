@@ -5,11 +5,11 @@ use staticfile::Static;
 
 use iron::prelude::*;
 use iron::status;
+use iron;
 use mount::Mount;
 use router::{Router};
 use api;
 
-use data_format::FileMeta;
 use rustc_serialize::json;
 
 #[derive(RustcEncodable)]
@@ -24,17 +24,26 @@ struct ErrorMessage {
 
 fn handler(req: &mut Request) -> IronResult<Response> {
   let query = req.extensions.get::<Router>().unwrap().find("method").unwrap_or("/");
-  if query == "list" {
+
+  let response = if query == "list" {
     let payload = match api::find_files("./logs") {
       Ok(logs) => json::encode(&LogFileList{ files: logs.iter().map(|&ref file| file[1..].to_string()).collect() }).unwrap(),
       Err(e) => json::encode(&ErrorMessage{message: e.description().to_string()}).unwrap()
     };
 
-    Ok(Response::with((status::Ok, payload)))
+    let mut response = Response::with((status::Ok, payload));
+    let jsony_ctype = iron::headers::ContentType(iron::mime::Mime(
+      iron::mime::TopLevel::Application,
+      iron::mime::SubLevel::Json,
+      vec![(iron::mime::Attr::Charset, iron::mime::Value::Utf8)]));
+
+    response.headers.set::<iron::headers::ContentType>(jsony_ctype);
+    response
   } else {
-    println!("{}", query);
-    Ok(Response::with(status::Ok))
-  }
+    Response::with(status::Ok)
+  };
+
+  Ok(response)
 }
 
 pub fn startup() {
@@ -49,7 +58,7 @@ pub fn startup() {
 
   let mut mount = Mount::new();
 
-  mount.mount("/logs", Static::new(Path::new("logs")));
+  mount.mount("/api/1/files/logs", Static::new(Path::new("logs")));
   mount.mount("/viewer", Static::new(Path::new("viewer")));
 
   let mut router = Router::new();

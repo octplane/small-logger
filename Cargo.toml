@@ -13,7 +13,6 @@ time = "*"
 iron = "*"
 router = "*" # iron router
 staticfile = "*"
-openssl-sys="0.7.4"
 getopts = "0.2"
 
 [dependencies.mount]

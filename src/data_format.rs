@@ -1,3 +1,4 @@
+#[allow(dead_code)]
 
 extern crate time;
 
@@ -37,7 +38,7 @@ impl JsonTime {
     println!("{}", time);
     match time::strptime(time.as_ref(), format) {
       Ok(ts) => Ok(JsonTime{time: ts}),
-      Err(e) => Err(format!("Unable to parse {} as {}", time, format))
+      Err(_) => Err(format!("Unable to parse {} as {}", time, format))
     }
   }
 
@@ -58,7 +59,7 @@ impl Decodable for JsonTime {
     let time = cropped_time + "000000";
     match time::strptime(time.as_ref(), format) {
       Ok(ts) => Ok(JsonTime{time: ts}),
-      Err(e) => Err(d.error(format!("Unable to parse {} as {}", time, format).as_ref()))
+      Err(_) => Err(d.error(format!("Unable to parse {} as {}", time, format).as_ref()))
     }
   }
 }
