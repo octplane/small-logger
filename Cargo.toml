@@ -8,12 +8,10 @@ repository = "https://github.com/octplane/small-logger"
 authors = ["Pierre Baillet <pierre@baillet.name>"]
 
 [dependencies]
-rustc-serialize = "*"
-time = "*"
-iron = "*"
-router = "*" # iron router
-staticfile = "*"
+rustc-serialize = "0.3.17"
+time = "0.1.34"
+iron = "0.2.6"
+router = "0.1.0"
+staticfile = "0.1.0."
 getopts = "0.2"
-
-[dependencies.mount]
-git = "https://github.com/iron/mount.git"
+mount = "0.0.10"

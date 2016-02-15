@@ -1,10 +1,10 @@
 [root]
 name = "small-logger"
-version = "0.0.2"
+version = "0.1.0"
 dependencies = [
  "getopts 0.2.14 (registry+https://github.com/rust-lang/crates.io-index)",
  "iron 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
- "mount 0.0.10 (git+https://github.com/iron/mount.git)",
+ "mount 0.0.10 (registry+https://github.com/rust-lang/crates.io-index)",
  "router 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rustc-serialize 0.3.17 (registry+https://github.com/rust-lang/crates.io-index)",
  "staticfile 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -184,15 +184,6 @@ dependencies = [
 name = "modifier"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-
-[[package]]
-name = "mount"
-version = "0.0.10"
-source = "git+https://github.com/iron/mount.git#d8451ed961c5fd69e60d917d1c61364d2f7b583b"
-dependencies = [
- "iron 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
- "sequence_trie 0.0.13 (registry+https://github.com/rust-lang/crates.io-index)",
-]
 
 [[package]]
 name = "mount"
