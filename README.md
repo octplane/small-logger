@@ -12,7 +12,16 @@
 small-logger your-program-name and its arguments
 ```
 
+# Now includes a simple log viewer
+
+```
+small-logger -d
+```
+
+Then connect to http://localhost:5001/viewer .
+
 # TODO
 
 - make log folder location a parameter
 - add MARK syslog like to indicate process is still alive when idle for a long time.
+- Authentication in http endpoint
