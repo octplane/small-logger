@@ -51,7 +51,7 @@ fn main() {
       let mut cmd = matches.free.clone();
       let params = cmd.split_off(1);
 
-      r.run(cmd[0].as_str(), params);
+      let _dummy = r.run(cmd[0].as_str(), params, None);
     } else {
       print_usage(&program, opts);
       return;
