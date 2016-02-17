@@ -15,3 +15,6 @@ router = "0.1.0"
 staticfile = "0.1.0."
 getopts = "0.2"
 mount = "0.0.10"
+
+frank_jwt = "*"
+urlencoded = "*"
