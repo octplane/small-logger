@@ -1,20 +1,10 @@
 #![allow(dead_code)]
 
 extern crate rustc_serialize;
-extern crate iron;
-extern crate staticfile;
-extern crate mount;
-extern crate router;
 extern crate getopts;
-extern crate urlencoded;
-
-
-extern crate frank_jwt;
 
 mod data_format;
 mod runner;
-mod daemon;
-mod api;
 
 use std::env;
 use getopts::Options;
@@ -23,7 +13,7 @@ extern crate time;
 
 
 fn print_usage(program: &str, opts: Options) {
-    let brief = format!("Usage: {} [-d] [-s] [COMMAND WITH PARAMETERS]", program);
+    let brief = format!("Usage: {} [-d log_folder] [-n process_name] [COMMAND WITH PARAMETERS]", program);
     print!("{}", opts.usage(&brief));
 }
 
@@ -34,9 +24,10 @@ fn main() {
   let program = args[0].clone();
 
   let mut opts = Options::new();
-  opts.optflag("s", "server", "start web server");
-  opts.optflag("d", "daemonize", "Daemonize the webserver, implies -s");
-  opts.optflag("h", "help", "print this help menu");
+  opts.optopt("d", "directory", "root log folder. Default is ./logs", "DIRECTORY");
+  opts.optopt("n", "name", "pretty name for the process. Should be time invariant and filesystem friendly. Default is process", "PROCESS");
+  opts.optopt("c", "change_directory", "PWD for the process. Default is .", "WORKING_DIRECTORY");
+  opts.optflag("h", "help", "print this help menu.");
 
   let matches = match opts.parse(&args[1..]) {
     Ok(m) => { m }
@@ -46,22 +37,22 @@ fn main() {
     print_usage(&program, opts);
     return;
   }
-  if matches.opt_present("d") || matches.opt_present("s") {
-    daemon::startup();
+
+  let directory = matches.opt_str("d").unwrap_or(String::from("./logs"));
+  let process = matches.opt_str("n").unwrap_or(String::from("process"));
+  let working_directory = Some(matches.opt_str("n").unwrap_or(String::from("c")));
+
+  // if matches.opt_present("d") || matches.opt_present("s") {
+  if matches.free.len() > 0 {
+    let r = runner::Runner;
+
+    let mut cmd = matches.free.clone();
+    let params = cmd.split_off(1);
+
+    let _dummy = r.run(cmd[0].as_str(), params, directory, process, working_directory);
   } else {
-    if matches.free.len() > 0 {
-      let r = runner::Runner;
-
-      let mut cmd = matches.free.clone();
-      let params = cmd.split_off(1);
-
-      let _dummy = r.run(cmd[0].as_str(), params, None);
-    } else {
-      print_usage(&program, opts);
-      return;
-    }
-  };
-
-
+    print_usage(&program, opts);
+    return;
+  }
 
 }

@@ -57,7 +57,7 @@ impl Writer {
 pub struct Runner;
 
 impl Runner {
-  pub fn run(&self, cmd: &str, parms: Vec<String>, pwd: Option<String>) -> Result<ExitStatus, Error> {
+  pub fn run(&self, cmd: &str, parms: Vec<String>, log_root_directory: String, process_name: String, pwd: Option<String>) -> Result<ExitStatus, Error> {
     //https://github.com/rust-lang/rust/blob/b83b26bacb6371173cdec6bf68c7ffa69f858c84/src/libstd/process.rs
     fn read_timestamped_lines<T: Read + Send + 'static>(stream: Option<T>, source: LogSource, sender: Sender<HashMap<String, String>>) {
       match stream {
@@ -89,7 +89,7 @@ impl Runner {
     let cmd_path = Path::new(cmd);
     let fname = match cmd_path.file_name() {
       Some(f) => {
-      let mut pth = time::strftime("./logs/%Y/%m/%d/", &start).ok().unwrap();
+      let mut pth = time::strftime(&format!("{}/{}/%Y/%m/%d/", log_root_directory, process_name), &start).ok().unwrap();
       let postfix = time::strftime("-%T.ajson", &start).ok().unwrap();
       let osname = f.to_string_lossy().into_owned();
       pth.push_str(&osname);
