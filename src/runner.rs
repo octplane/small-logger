@@ -104,12 +104,13 @@ impl Runner {
     let th = thread::spawn(move || {
       writer.run(fname, receiver);
     });
+    let current_dir = pwd.unwrap_or(String::from("."));
 
-    sender.send(TimestampedLine::msg(format!("Processing {}", cmd))).unwrap();
+    sender.send(TimestampedLine::msg(format!("Processing {} in folder {}", cmd, current_dir))).unwrap();
 
     let mut child = match Command::new(&cmd)
       .args(parms.as_ref())
-      .current_dir(pwd.unwrap_or(String::from(".")))
+      .current_dir(current_dir)
       .stdin(Stdio::null())
       .stdout(Stdio::piped())
       .stderr(Stdio::piped())

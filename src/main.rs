@@ -40,7 +40,7 @@ fn main() {
 
   let directory = matches.opt_str("d").unwrap_or(String::from("./logs"));
   let process = matches.opt_str("n").unwrap_or(String::from("process"));
-  let working_directory = Some(matches.opt_str("n").unwrap_or(String::from("c")));
+  let working_directory = Some(matches.opt_str("c").unwrap_or(String::from(".")));
 
   // if matches.opt_present("d") || matches.opt_present("s") {
   if matches.free.len() > 0 {
