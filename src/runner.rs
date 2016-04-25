@@ -40,7 +40,6 @@ impl Writer {
           stop = stop - 1;
         } else {
         let encoded = json::encode(&tl).unwrap();
-        println!("{:?}", tl);
         file.write_all(&encoded.into_bytes()).ok();
         file.write_all(b"\n").ok();
         }
